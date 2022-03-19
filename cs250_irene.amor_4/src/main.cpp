@@ -18,24 +18,24 @@ Hours spent on this assignment: ~20
 */
 /****************************************************************************************/
 
-#include "TankFunctions.h"
+#include "AirplaneFunctions.h"
 
 int main()
 {
-    //Create a tank
-    Tank tank;
-    tank.Tank_Initialize();
+    //Create a airplane
+    Airplane airplane;
+    airplane.Airplane_Initialize();
 
-    sf::RenderWindow window(sf::VideoMode(tank.WIDTH, tank.HEIGHT), "SFML works!");
+    sf::RenderWindow window(sf::VideoMode(airplane.WIDTH, airplane.HEIGHT), "SFML works!");
 
-    FrameBuffer::Init(tank.WIDTH, tank.HEIGHT);
+    FrameBuffer::Init(airplane.WIDTH, airplane.HEIGHT);
 
     // Generate image and texture to display
     sf::Image   image;
     sf::Texture texture;
     sf::Sprite  sprite;
-    texture.create(tank.WIDTH, tank.HEIGHT);
-    image.create(tank.WIDTH, tank.HEIGHT, sf::Color::Black);
+    texture.create(airplane.WIDTH, airplane.HEIGHT);
+    image.create(airplane.WIDTH, airplane.HEIGHT, sf::Color::Black);
 
 
     while (window.isOpen())
@@ -53,8 +53,8 @@ int main()
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
             window.close();
 
-        // Calculate tank position
-        tank.Tank_Update();
+        // Calculate airplane position
+        airplane.Airplane_Update();
 
         // Show image on screen
         FrameBuffer::ConvertFrameBufferToSFMLImage(image);

@@ -66,6 +66,8 @@ private:
 	void RootedCamera();
 	void ThirdPersonCamera();
 
+	Matrix4 tensor_product(Vector4 u, Vector4 v);
+	Matrix4 get_matrix(Vector4 u);
 
 	//------------
 	//Variables
@@ -84,7 +86,7 @@ private:
 	Matrix4 w2c;
 
 	Point4 color[12];				//Color of each triangle
-	const float ROT_ANGLE = 0.025f;	//Angle of rotation for the inputs
+	const float ROT_ANGLE = 2.5f;	//Angle of rotation for the inputs
 
 	unsigned draw_mode = solid;		//Drawing mode
 

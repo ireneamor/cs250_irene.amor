@@ -430,6 +430,42 @@ Matrix4 Airplane::ModelToWorld(CS250Parser::Transform obj, bool scale)
     return m2w;
 }
 
+Matrix4 Airplane::tensor_product(Vector4 u, Vector4 v)
+{
+    Matrix4 tensor;
+    tensor.Identity();
+
+    tensor.m[0][0] = u.x * v.x;
+    tensor.m[0][1] = u.x * v.y;
+    tensor.m[0][2] = u.x * v.z;
+
+    tensor.m[1][0] = u.y * v.x;
+    tensor.m[1][1] = u.y * v.y;
+    tensor.m[1][2] = u.y * v.z;
+
+    tensor.m[2][0] = u.z * v.x;
+    tensor.m[2][1] = u.z * v.y;
+    tensor.m[2][2] = u.z * v.z;
+
+    return tensor;
+}
+
+Matrix4 Airplane::get_matrix(Vector4 u)
+{
+    Matrix4 m;
+    m.Identity();
+
+    m.m[0][1] = -u.z;
+    m.m[0][2] =  u.y;
+
+    m.m[1][0] =  u.z;
+    m.m[1][2] = -u.x;
+
+    m.m[2][0] = -u.y;
+    m.m[2][1] =  u.x;
+
+    return m;
+}
 
 /**
 * @brief GetInput:  change airplane with input from user
@@ -446,53 +482,16 @@ unsigned Airplane::GetInput()
             Matrix4 m2w_body = ModelToWorld(*body, false);
             Vector4 airplane_fwd = m2w_body * (-parser->view);
 
-            Matrix4 Transl;
-            {
-                Transl.Identity();
-                Transl.m[0][3] = -body->pos.x;
-                Transl.m[1][3] = -body->pos.y;
-                Transl.m[2][3] = -body->pos.z;
-            }
+            Matrix4 identity; identity.Identity();
 
-            //Rotation
-            Matrix4 Rot, RotX, RotY, RotZ;
-            Vector4 angle = body->rot;
-            {
-                //Rotation y-axis
-                float length_Y = sqrtf((airplane_fwd.x * airplane_fwd.x) + (airplane_fwd.z * airplane_fwd.z));
-                float cos_Y = airplane_fwd.z / length_Y;
-                float sin_Y = -airplane_fwd.x / length_Y;
+            Matrix4 AxisAngle;
+            AxisAngle.Identity();
+            AxisAngle = identity * cos(ROT_ANGLE)
+                        + tensor_product(airplane_fwd, airplane_fwd) * (1 - cos(ROT_ANGLE))
+                        + get_matrix(airplane_fwd) * sin(ROT_ANGLE);
 
-                RotY.Identity();
-                RotY.m[0][0] = cos_Y;
-                RotY.m[0][2] = sin_Y;
-                RotY.m[2][0] = -sin_Y;
-                RotY.m[2][2] = cos_Y;
-
-                //Rotation x-axis
-                Vector4 fwd_prime = RotY * Transl * airplane_fwd;
-                float length_X = sqrtf((fwd_prime.y * fwd_prime.y) + (fwd_prime.z * fwd_prime.z));
-                float cos_X = -fwd_prime.z / length_X;
-                float sin_X = -fwd_prime.y / length_X;
-
-                RotX.Identity();
-                RotX.m[1][1] = cos_X;
-                RotX.m[1][2] = -sin_X;
-                RotX.m[2][1] = sin_X;
-                RotX.m[2][2] = cos_X;
-
-                //Rotate about z-axis by ROT_ANGLE
-                RotZ.Identity();
-                RotZ.m[0][0] = cos(ROT_ANGLE);
-                RotZ.m[0][1] = -sin(ROT_ANGLE);
-                RotZ.m[1][0] = sin(ROT_ANGLE);
-                RotZ.m[1][1] = cos(ROT_ANGLE);
-            }
-            
-            body->pos = RotZ * RotX * RotY * Transl * body->pos;
-
-            //body->rot.z += ROT_ANGLE;
-
+            body->rot = AxisAngle * body->rot;
+                 
         }
     }
 

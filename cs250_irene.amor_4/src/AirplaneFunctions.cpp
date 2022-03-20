@@ -109,9 +109,20 @@ void Airplane::Airplane_Update()
             //Draw the object
             if (draw)
             {
-                if (draw_mode == solid)
+                if (draw_mode == depth_buffer)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        vtx[j].color.r = (vtx[j].position.z + 1) * 0.5f;
+                        vtx[j].color.g = (vtx[j].position.z + 1) * 0.5f;
+                        vtx[j].color.b = (vtx[j].position.z + 1) * 0.5f;
+                    }
+
                     Rasterizer::DrawTriangleSolid(vtx[0], vtx[1], vtx[2]);
-                else //if(draw_mode == wireframe)
+                }
+                else if (draw_mode == solid)
+                    Rasterizer::DrawTriangleSolid(vtx[0], vtx[1], vtx[2]);
+                else
                 {
                     //Every line composing the triangle
                     Rasterizer::DrawMidpointLine(vtx[0], vtx[1]);
@@ -173,11 +184,11 @@ void Airplane::FirstPersonCamera()
 {
     //Calculate the m2w matrix of the turret
     CS250Parser::Transform* body = FindObject("body");
-    Matrix4 m2w_body = ModelToWorld(*body, true);
+    Matrix4 m2w_body = ModelToWorld(*body, false);
 
     //Set the camera information
     camera_position = body->pos;    
-    camera_view = m2w_body * parser->view;
+    camera_view = m2w_body * -parser->view;
     camera_up = m2w_body * parser->up;
     
 
@@ -212,40 +223,24 @@ void Airplane::RootedCamera()
 */
 void Airplane::ThirdPersonCamera()
 {
-    /*/Calculate the m2w matrix of the body
+    //Calculate the m2w matrix of the body
     CS250Parser::Transform* body = FindObject("body");
-    Matrix4 m2w_body = ModelToWorld(*body, true);
+    Matrix4 m2w_body = ModelToWorld(*body, false);
 
     //Get the vectors of the airplane for the new camera
     Point4 airplane_pos = body->pos;
-    Vector4 airplane_fwd = m2w_body * parser->view;
-    airplane_fwd.Normalize();
+    Vector4 airplane_fwd = m2w_body * (-parser->view);
+    //airplane_fwd.Normalize();
     Vector4 airplane_up = m2w_body * parser->up;
-    airplane_up.Normalize();
+    //airplane_up.Normalize();
 
     //Set the camera information
     camera_position = airplane_pos - airplane_fwd * parser->distance + airplane_up * parser->height;
-    camera_view = ((airplane_pos - camera_position) / (airplane_pos - camera_position).Length());
+    camera_view = (airplane_pos - camera_position) / (airplane_pos - camera_position).Length();
     
-    Vector4 camera_right = camera_view.Cross(parser->up);
-    camera_up = camera_right.Cross(camera_view);*/
-    //Calculate the m2w matrix of the body
-    CS250Parser::Transform* body = FindObject("body");
-    Matrix4 m2w_body = ModelToWorld(*body, true);
-
-    //Get the vectors of the tank for the new camera
-    Point4 tank_pos = m2w_body * parser->position;
-    Vector4 tank_fwd = m2w_body * (-parser->view);
-    tank_fwd.Normalize();
-    Vector4 tank_up = m2w_body * (parser->up);
-    tank_up.Normalize();
-
-    //Set the camera information
-    camera_position = tank_pos - tank_fwd * parser->distance + tank_up * parser->height;
-    camera_view = ((tank_pos - camera_position) / (tank_pos - camera_position).Length());
-
-    Vector4 camera_right = camera_view.Cross(parser->up);
+    Vector4 camera_right = camera_view.Cross(airplane_up);
     camera_up = camera_right.Cross(camera_view);
+
     //Set the new w2c matrix
     w2c = WorldToCamera_Orth();
 }
@@ -261,17 +256,17 @@ Matrix4 Airplane::WorldToCamera_Orth()
 {
     //Step 1: ALIGN
     Vector4 v = camera_up;      v.Normalize();
-    Vector4 w = camera_view;    w.Normalize();
-    Vector4 u = -w.Cross(v);     //u.Normalize();
+    Vector4 w = -camera_view;   w.Normalize();
+    Vector4 u = w.Cross(v);     //u.Normalize();
     
     Vector4 A(camera_position.x, camera_position.y, camera_position.z, camera_position.w);
 
-    Matrix4 align  ( u.x,  u.y,  u.z,  -(u.Dot(A)),
+    Matrix4 align  (-u.x, -u.y, -u.z,   (u.Dot(A)),
                      v.x,  v.y,  v.z,  -(v.Dot(A)),
                      w.x,  w.y,  w.z,  -(w.Dot(A)),
                      0.f,  0.f,  0.f,   1.f);
                                  
-    //Rotation
+    /*//Rotation
     Matrix4 RotY, RotZ, RotX, RotInvX, RotInvY;
     {
         //Rotation y-axis
@@ -319,7 +314,7 @@ Matrix4 Airplane::WorldToCamera_Orth()
     }
 
     //Step 2: ROTATE
-    /*Matrix4 RotX;
+    Matrix4 RotX;
     float length_X = sqrtf((u.x * u.x) + (u.z * u.z));
     float cos_X = u.z / length_X;
     float sin_X = -u.x / length_X;
@@ -328,7 +323,7 @@ Matrix4 Airplane::WorldToCamera_Orth()
     RotX.m[1][1] = cos_X;
     RotX.m[1][2] = -sin_X;
     RotX.m[2][1] = sin_X;
-    RotX.m[2][2] = cos_X;*/
+    RotX.m[2][2] = cos_X;
 
     //Step 3: UNDO step 1
     Matrix4 un_align(u.x, v.x, w.x, A.x,
@@ -336,7 +331,8 @@ Matrix4 Airplane::WorldToCamera_Orth()
                      u.z, v.z, w.z, A.z,
                      0.f, 0.f, 0.f, 1.f);
 
-    Matrix4 w2c = un_align * RotInvY * RotInvX * RotZ * RotX * RotY * align;
+    Matrix4 w2c = un_align * RotInvY * RotInvX * RotZ * RotX * RotY * align;*/
+
     return align;
 }
 
@@ -445,8 +441,59 @@ unsigned Airplane::GetInput()
     //Roll airplane body
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
-        if(CS250Parser::Transform* body = FindObject("body"))
-            body->rot.z += 0.025f;
+        if (CS250Parser::Transform* body = FindObject("body"))
+        {
+            Matrix4 m2w_body = ModelToWorld(*body, false);
+            Vector4 airplane_fwd = m2w_body * (-parser->view);
+
+            Matrix4 Transl;
+            {
+                Transl.Identity();
+                Transl.m[0][3] = -body->pos.x;
+                Transl.m[1][3] = -body->pos.y;
+                Transl.m[2][3] = -body->pos.z;
+            }
+
+            //Rotation
+            Matrix4 Rot, RotX, RotY, RotZ;
+            Vector4 angle = body->rot;
+            {
+                //Rotation y-axis
+                float length_Y = sqrtf((airplane_fwd.x * airplane_fwd.x) + (airplane_fwd.z * airplane_fwd.z));
+                float cos_Y = airplane_fwd.z / length_Y;
+                float sin_Y = -airplane_fwd.x / length_Y;
+
+                RotY.Identity();
+                RotY.m[0][0] = cos_Y;
+                RotY.m[0][2] = sin_Y;
+                RotY.m[2][0] = -sin_Y;
+                RotY.m[2][2] = cos_Y;
+
+                //Rotation x-axis
+                Vector4 fwd_prime = RotY * Transl * airplane_fwd;
+                float length_X = sqrtf((fwd_prime.y * fwd_prime.y) + (fwd_prime.z * fwd_prime.z));
+                float cos_X = -fwd_prime.z / length_X;
+                float sin_X = -fwd_prime.y / length_X;
+
+                RotX.Identity();
+                RotX.m[1][1] = cos_X;
+                RotX.m[1][2] = -sin_X;
+                RotX.m[2][1] = sin_X;
+                RotX.m[2][2] = cos_X;
+
+                //Rotate about z-axis by ROT_ANGLE
+                RotZ.Identity();
+                RotZ.m[0][0] = cos(ROT_ANGLE);
+                RotZ.m[0][1] = -sin(ROT_ANGLE);
+                RotZ.m[1][0] = sin(ROT_ANGLE);
+                RotZ.m[1][1] = cos(ROT_ANGLE);
+            }
+            
+            body->pos = RotZ * RotX * RotY * Transl * body->pos;
+
+            //body->rot.z += ROT_ANGLE;
+
+        }
     }
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))

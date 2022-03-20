@@ -47,12 +47,14 @@ void DrawMidpointLine(const Vertex & v0, const Vertex & v1)
     float rInc = (v1.color.r - v0.color.r) / length;
     float gInc = (v1.color.g - v0.color.g) / length;
     float bInc = (v1.color.b - v0.color.b) / length;
+    float zInc = (v1.position.z - v0.position.z) / length;
 
     float r = v0.color.r;
     float g = v0.color.g;
     float b = v0.color.b;
+    float z = v0.position.z;
 
-    FrameBuffer::SetPixel(x, y, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
+    FrameBuffer::SetPixel(x, y, z, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
 
     if (abs(dy) > abs(dx)) // |m|>1
     {
@@ -73,11 +75,12 @@ void DrawMidpointLine(const Vertex & v0, const Vertex & v1)
             else
                 dstart += dn;
 
-            FrameBuffer::SetPixel(x, y, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
+            FrameBuffer::SetPixel(x, y, z, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
 
             r += rInc;
             g += gInc;
             b += bInc;
+            z += zInc;
         }
     }
     else // |m|<1
@@ -99,11 +102,12 @@ void DrawMidpointLine(const Vertex & v0, const Vertex & v1)
             else
                 dstart += de;
 
-            FrameBuffer::SetPixel(x, y, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
+            FrameBuffer::SetPixel(x, y, z, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
 
             r += rInc;
             g += gInc;
             b += bInc;
+            z += zInc;
         }
     }
 }
@@ -207,10 +211,14 @@ void DrawTriangleSolid(const Vertex & v0, const Vertex & v1, const Vertex & v2)
     // BLUE
     float v1B[3] = {middle->position.x - top->position.x, middle->position.y - top->position.y, static_cast<float>(middle->color.b - top->color.b)};
     float v2B[3] = {bottom->position.x - top->position.x, bottom->position.y - top->position.y, static_cast<float>(bottom->color.b - top->color.b)};
+     // Z
+    float v1Z[3] = {middle->position.x - top->position.x, middle->position.y - top->position.y, middle->position.z - top->position.z};
+    float v2Z[3] = {bottom->position.x - top->position.x, bottom->position.y - top->position.y, bottom->position.z - top->position.z};
     // NORMALS
     float nR[3] = {v1R[1] * v2R[2] - v1R[2] * v2R[1], v1R[2] * v2R[0] - v1R[0] * v2R[2], v1R[0] * v2R[1] - v1R[1] * v2R[0]};
     float nG[3] = {v1G[1] * v2G[2] - v1G[2] * v2G[1], v1G[2] * v2G[0] - v1G[0] * v2G[2], v1G[0] * v2G[1] - v1G[1] * v2G[0]};
     float nB[3] = {v1B[1] * v2B[2] - v1B[2] * v2B[1], v1B[2] * v2B[0] - v1B[0] * v2B[2], v1B[0] * v2B[1] - v1B[1] * v2B[0]};
+    float nZ[3] = {v1Z[1] * v2Z[2] - v1Z[2] * v2Z[1], v1Z[2] * v2Z[0] - v1Z[0] * v2Z[2], v1Z[0] * v2Z[1] - v1Z[1] * v2Z[0]};
     // Increments
     float rIncX = -nR[0] / nR[2];
     float rIncY = -nR[1] / nR[2];
@@ -218,12 +226,15 @@ void DrawTriangleSolid(const Vertex & v0, const Vertex & v1, const Vertex & v2)
     float gIncY = -nG[1] / nG[2];
     float bIncX = -nB[0] / nB[2];
     float bIncY = -nB[1] / nB[2];
+    float zIncX = -nZ[0] / nZ[2];
+    float zIncY = -nZ[1] / nZ[2];
 
     float rL = top->color.r;
     float gL = top->color.g;
     float bL = top->color.b;
+    float zL = top->position.z;
 
-    float r, g, b;
+    float r, g, b, z;
 
     // Start the loop, from the y_top to y_middle
     while (y <= yMax)
@@ -235,17 +246,19 @@ void DrawTriangleSolid(const Vertex & v0, const Vertex & v1, const Vertex & v2)
         r = rL;
         g = gL;
         b = bL;
+        z = zL;
 
 
         while (x <= xMax)
         {
-            FrameBuffer::SetPixel(x, y, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
+            FrameBuffer::SetPixel(x, y, z, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
 
             ++x;
 
             r += rIncX;
             g += gIncX;
             b += bIncX;
+            z += zIncX;
         }
 
         xL += xIncLeft;
@@ -255,6 +268,7 @@ void DrawTriangleSolid(const Vertex & v0, const Vertex & v1, const Vertex & v2)
         rL += rIncY + rIncX * xIncLeft;
         gL += gIncY + gIncX * xIncLeft;
         bL += bIncY + bIncX * xIncLeft;
+        zL += zIncY + zIncX * xIncLeft;
     }
 
     // MIDDLE to BOTTOM
@@ -273,6 +287,7 @@ void DrawTriangleSolid(const Vertex & v0, const Vertex & v1, const Vertex & v2)
         rL = middle->color.r;
         gL = middle->color.g;
         bL = middle->color.b;
+        zL = middle->position.z;
     }
     else
     {
@@ -289,17 +304,19 @@ void DrawTriangleSolid(const Vertex & v0, const Vertex & v1, const Vertex & v2)
         r = rL;
         g = gL;
         b = bL;
+        z = zL;
 
         // Loop along the scanline, from left to right
         while (x <= xMax)
         {
-            FrameBuffer::SetPixel(x, y, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
+            FrameBuffer::SetPixel(x, y, z, static_cast<unsigned char>(r * 255.99), static_cast<unsigned char>(g * 255.99), static_cast<unsigned char>(b * 255.99));
 
             ++x;
 
             r += rIncX;
             g += gIncX;
             b += bIncX;
+            z += zIncX;
         }
 
         xL += xIncLeft;
@@ -309,6 +326,7 @@ void DrawTriangleSolid(const Vertex & v0, const Vertex & v1, const Vertex & v2)
         rL += rIncY + rIncX * xIncLeft;
         gL += gIncY + gIncX * xIncLeft;
         bL += bIncY + bIncX * xIncLeft;
+        zL += zIncY + zIncX * xIncLeft;
     }
 }
 

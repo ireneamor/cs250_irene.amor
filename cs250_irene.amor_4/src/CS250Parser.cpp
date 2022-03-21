@@ -122,6 +122,10 @@ void CS250Parser::LoadDataFromFile(const char * filename)
         transform.name = name;
         transform.parent = parent;
         
+        transform.up    = Vector4(0.f, 1.f, 0.f);
+        transform.fwd   = Vector4(0.f, 0.f, 1.f); 
+        transform.right = Vector4(-1.f, 0.f, 0.f);;
+
         objects.push_back(transform);
     }
     fscanf_s(in, "}\n");

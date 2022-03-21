@@ -5,15 +5,16 @@
 \par    email: irene.amor@digipen.edu
 \par    DigiPen login: irene.amor
 \par    Course: CS250
-\par    Assignment #3
-\date   06/03/2022
+\par    Assignment #4
+\date   19/03/2022
 \brief
 
 This file contains the implementation of the following class functions for the
 second Airplane assignment.
 Functions include:	Airplane_Initialize, Viewport_Transformation, Perspective_Transform,
-					ModelToWorld, WorldToCamera_GRM, FindObject, FirstPersonCamera,
-					RootedCamera, ThirdPersonCamera, Airplane_Update, GetInput
+					ModelToWorld, OrthogonalMethod, WorldToCamera_Orth, AxisAngleMethod,
+					FindObject, FirstPersonCamera, RootedCamera, ThirdPersonCamera,
+					Airplane_Update, GetInput, tensor_product, get_matrix
 
 Hours spent on this assignment: ~12
 
@@ -55,20 +56,21 @@ private:
 	void Viewport_Transformation();					//Calculate the viewport transformation matrix
 	void Perspective_Transform();					//Calculate the perspective projection matrix
 
-	Matrix4 ModelToWorld(CS250Parser::Transform obj, bool scale = true);	//Calculate the m2w matrix of each object
-	Matrix4 WorldToCamera_Orth();					//Calculate the w2c for the corresponding camera
+	Matrix4 ModelToWorld(CS250Parser::Transform &obj, bool scale = true);	//Calculate the m2w matrix of each object
+	Matrix4 OrthogonalMethod(CS250Parser::Transform& obj);					//Calculate the orthogonal rotation matrix of an object
+	Matrix4 WorldToCamera_Orth();											//Calculate the w2c for the corresponding camera
+	Matrix4 AxisAngleMethod(float angle, Vector4 vec);						//Calculate the axis angle method rotation matrix
 
-	unsigned GetInput();							//Get user input
+	unsigned GetInput();									//Get user input
 
 	CS250Parser::Transform* FindObject(std::string obj);	//Find the object's transform from its name
-	int FindObject_pos(std::string obj);					//Find the object's position in the parser->objects array
 
 	void FirstPersonCamera();						//Functions to get the information of the corresponding camera
 	void RootedCamera();
 	void ThirdPersonCamera();
 
-	Matrix4 tensor_product(Vector4 u, Vector4 v);
-	Matrix4 get_matrix(Vector4 u);
+	Matrix4 tensor_product(Vector4 u, Vector4 v);	//Calculate the tensor product of two vectors
+	Matrix4 get_matrix(Vector4 u);					//Get the matrix of the vector
 
 	//------------
 	//Variables
@@ -87,17 +89,15 @@ private:
 	Matrix4 w2c;
 
 	Point4 color[12];				//Color of each triangle
-	const float ROT_ANGLE = 1.5f;	//Angle of rotation for the inputs
 
 	unsigned draw_mode = solid;		//Drawing mode
 
 	Point4  camera_position;		//Camera information
 	Vector4 camera_view;
 	Vector4 camera_up;
-	Vector4 camera_right;
 
-	Vector4 airplane_up;
-	Vector4 airplane_fwd;
+	const float ROT_ANGLE = 0.05f;	//Angle to rotate by after the input
+	const float MOVE_DIST = 7.5f;	//Distance to change the camera distance or height by
 
 	int camera_persp = 0;			//Camera type
 	enum camera{first, rooted, third};

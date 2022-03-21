@@ -19,6 +19,6 @@ class FrameBuffer
     static int             width;
     static int             height;
     static unsigned char * imageData;
-    static float          *DepthBuffer;
+    static float         * DepthBuffer;
 
 };

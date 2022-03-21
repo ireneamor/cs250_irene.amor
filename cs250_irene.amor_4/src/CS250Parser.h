@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/Point4.h"
+#include "Math/Matrix4.h"
 #include <string>
 #include <vector>
 
@@ -39,6 +40,12 @@ class CS250Parser
         Point4  pos;
         Vector4 rot;
         Vector4 sca;
+
+        Vector4 up;     //Vectors of the objects
+        Vector4 fwd;
+        Vector4 right;
+
+        Matrix4 m2w;    //M2W without scale
 
         std::string parent;
     };

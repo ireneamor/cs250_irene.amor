@@ -29,6 +29,16 @@ void Airplane::Airplane_Initialize()
     RootedCamera();
     draw_mode = solid;
 
+    CS250Parser::Transform* body = FindObject("body");
+    Matrix4 m2w_body = ModelToWorld(*body, false);
+
+    //Get the vectors of the airplane for the new camera
+    Point4 airplane_pos = body->pos;
+    airplane_fwd = m2w_body * (-parser->view);
+    airplane_fwd.Normalize();
+    airplane_up = m2w_body * parser->up;
+    airplane_up.Normalize();
+
 
     //Get the color of each face
     //They are the same for all the cubes
@@ -229,16 +239,16 @@ void Airplane::ThirdPersonCamera()
 
     //Get the vectors of the airplane for the new camera
     Point4 airplane_pos = body->pos;
-    Vector4 airplane_fwd = m2w_body * (-parser->view);
+    //airplane_fwd = m2w_body * airplane_fwd//(-parser->view);
     //airplane_fwd.Normalize();
-    Vector4 airplane_up = m2w_body * parser->up;
+    //airplane_up = m2w_body * parser->up;
     //airplane_up.Normalize();
 
     //Set the camera information
     camera_position = airplane_pos - airplane_fwd * parser->distance + airplane_up * parser->height;
     camera_view = (airplane_pos - camera_position) / (airplane_pos - camera_position).Length();
     
-    Vector4 camera_right = camera_view.Cross(airplane_up);
+    camera_right = camera_view.Cross(camera_up);
     camera_up = camera_right.Cross(camera_view);
 
     //Set the new w2c matrix
@@ -356,6 +366,18 @@ CS250Parser::Transform* Airplane::FindObject(std::string obj)
     return nullptr;
 }
 
+int Airplane::FindObject_pos(std::string obj)
+{
+    for (int i = 0; i < TOTAL_obj; i++)
+    {
+        //Find the object
+        if (!strcmp(obj.c_str(), parser->objects[i].name.c_str()))
+            return i;
+    }
+
+    //If it is never found
+    return -1;
+}
 
 /**
 * @brief ModelToWorld:  calculate the model to world matrix of the object
@@ -486,19 +508,23 @@ unsigned Airplane::GetInput()
 
             Matrix4 AxisAngle;
             AxisAngle.Identity();
-            AxisAngle = identity * cos(ROT_ANGLE)
-                        + tensor_product(airplane_fwd, airplane_fwd) * (1 - cos(ROT_ANGLE))
-                        + get_matrix(airplane_fwd) * sin(ROT_ANGLE);
+            AxisAngle = identity * cos(-ROT_ANGLE)
+                        + tensor_product(airplane_fwd, airplane_fwd) * (1 - cos(-ROT_ANGLE))
+                        + get_matrix(airplane_fwd) * sin(-ROT_ANGLE);
 
-            body->rot = AxisAngle * body->rot;
-                 
+            //body->rot = AxisAngle * body->rot;
+            //camera_view = AxisAngle * camera_view;
+            //camera_up = AxisAngle * camera_up;
+            //camera_right = AxisAngle * camera_right;
+            airplane_fwd = AxisAngle * airplane_fwd;
+            airplane_up = AxisAngle * airplane_up;
         }
     }
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
         if (CS250Parser::Transform* body = FindObject("body"))
-            body->rot.z -= 0.025f;
+             body->rot.z -= 0.025f;
     }
 
 
@@ -506,13 +532,47 @@ unsigned Airplane::GetInput()
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
     {
         if (CS250Parser::Transform* body = FindObject("body"))
-            body->rot.y += 0.025f;
-    }
+        {
+            Matrix4 m2w_body = ModelToWorld(*body, false);
+            Vector4 airplane_up = m2w_body * (-parser->up);
+
+            Matrix4 identity; identity.Identity();
+
+            Matrix4 AxisAngle;
+            AxisAngle.Identity();
+            AxisAngle = identity * cos(-ROT_ANGLE)
+                + tensor_product(airplane_up, airplane_up) * (1 - cos(-ROT_ANGLE))
+                + get_matrix(airplane_up) * sin(-ROT_ANGLE);
+
+            body->rot = AxisAngle * body->rot;
+            // camera_view = AxisAngle * camera_view;
+
+        }
+        //if (CS250Parser::Transform* body = FindObject("body"))
+        //    body->rot.y += 0.025f;
+    }   
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
     {
         if (CS250Parser::Transform* body = FindObject("body"))
-            body->rot.y -= 0.025f;
+        {
+            Matrix4 m2w_body = ModelToWorld(*body, false);
+            Vector4 airplane_up = m2w_body * (-parser->up);
+
+            Matrix4 identity; identity.Identity();
+
+            Matrix4 AxisAngle;
+            AxisAngle.Identity();
+            AxisAngle = identity * cos(ROT_ANGLE)
+                + tensor_product(airplane_up, airplane_up) * (1 - cos(ROT_ANGLE))
+                + get_matrix(airplane_up) * sin(ROT_ANGLE);
+
+            body->rot = AxisAngle * body->rot;
+            // camera_view = AxisAngle * camera_view;
+
+        }
+        //if (CS250Parser::Transform* body = FindObject("body"))
+        //    body->rot.y -= 0.025f;
     }
 
 

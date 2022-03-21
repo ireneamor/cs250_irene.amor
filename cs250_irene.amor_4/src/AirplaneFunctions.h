@@ -61,6 +61,7 @@ private:
 	unsigned GetInput();							//Get user input
 
 	CS250Parser::Transform* FindObject(std::string obj);	//Find the object's transform from its name
+	int FindObject_pos(std::string obj);					//Find the object's position in the parser->objects array
 
 	void FirstPersonCamera();						//Functions to get the information of the corresponding camera
 	void RootedCamera();
@@ -86,13 +87,17 @@ private:
 	Matrix4 w2c;
 
 	Point4 color[12];				//Color of each triangle
-	const float ROT_ANGLE = 2.5f;	//Angle of rotation for the inputs
+	const float ROT_ANGLE = 1.5f;	//Angle of rotation for the inputs
 
 	unsigned draw_mode = solid;		//Drawing mode
 
 	Point4  camera_position;		//Camera information
 	Vector4 camera_view;
 	Vector4 camera_up;
+	Vector4 camera_right;
+
+	Vector4 airplane_up;
+	Vector4 airplane_fwd;
 
 	int camera_persp = 0;			//Camera type
 	enum camera{first, rooted, third};
